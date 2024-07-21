@@ -10,7 +10,7 @@ import MoviePage from './pages/movie/movie';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter basename={process.env.PUBLIC_URL}>
+    <BrowserRouter >
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
