@@ -1,36 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Card from "../Card/Card";
-import "./MovieList.css";
+import { useState } from "react"
+import "./MovieList.css"
 
 const MovieList = () => {
-  const { type } = useParams();
-  const [movieList, setMovieList] = useState([]);
+    const { type } = useParams()
+    const [movieData, setMovieData] = useState([])
 
-  useEffect(() => {
-    getDetails();
-  }, [type]);
+    useEffect(() => {
+        const getData = async () => {
+            const response = await fetch(`https://api.themoviedb.org/3/movie/${type ? type : "popular"}?api_key=6c2f0fd8f17254489c08e1441d4f5040`)
+            const data = await response.json()
+            setMovieData(data.results)
+        }
+        getData()
+    }, [type])
 
-  const getDetails = () => {
-    fetch(
-      `https://api.themoviedb.org/3/movie/${
-        type ? type : "popular"
-      }?api_key=4e44d9029b1270a757cddc766a1bcb63&language=en-US`
-    )
-      .then((response) => response.json())
-      .then((data) => setMovieList(data.results));
-  };
-
-  return (
-    <div className="movie__list">
-      <h2 className="list__title" >{(type ? type : "POPULAR").toUpperCase()}</h2>
-      <div className="list__cards">
-        {movieList.map((movie) => (
-          <Card movie={movie} key={movie.id} />
-        ))}
-      </div>
-    </div>
-  );
-};
+    return (
+        <div className="movie__list" >
+            <h2 className="list__title" >{type ? type.toUpperCase() : "POPULAR"}</h2>
+            <div className="list__cards" >
+                {
+                    movieData.map(movie => (
+                        <Card movie={movie} key={movie.id} />
+                    ))
+                }
+            </div>
+        </div>
+    );
+}
 
 export default MovieList;
