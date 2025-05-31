@@ -1,29 +1,79 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
 import "./Navbar.css";
 
+// Replace with your real TMDB API key
+const TMDB_API_KEY = "YOUR_API_KEY_HERE";
+
+const fetchMovies = async (query) => {
+  if (!query) return [];
+  const res = await fetch(
+    `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
+      query
+    )}`
+  );
+  const data = await res.json();
+  return data.results ? data.results.slice(0, 8) : [];
+};
+
 const Navbar = () => {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef();
+  const navigate = useNavigate(); // Add this
+
+  // Fetch movies when search changes
+  useEffect(() => {
+    if (search.trim()) {
+      fetchMovies(search).then(setResults);
+      setShowDropdown(true);
+    } else {
+      setResults([]);
+      setShowDropdown(false);
+    }
+  }, [search]);
+
+  // Hide dropdown when clicking outside
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Handle Enter key or button click
+  const handleSearch = async () => {
+    if (search.trim()) {
+      setShowDropdown(false);
+      navigate(`/search?query=${encodeURIComponent(search)}`); // Navigate to search page
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
-    <div className="header">
+    <nav className="header" aria-label="Main Navigation">
       <div className="header__left">
-        <Link to={"/"}>
+        <Link to={"/"} className="logo" aria-label="Home">
+          {/* ...SVG unchanged... */}
           <svg
-            height={50}
-            width={50}
+            height={44}
+            width={44}
             viewBox="0 0 128 128"
             xmlns="http://www.w3.org/2000/svg"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
             aria-hidden="true"
             role="img"
-            className="iconify iconify--noto"
-            preserveAspectRatio="xMidYMid meet"
-            fill="#000000"
+            fill="#e50914"
+            style={{ transition: "transform 0.2s" }}
           >
-            <g id="SVGRepo_bgCarrier" strokeWidth={0} />
-            <g
-              id="SVGRepo_tracerCarrier"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
             <g id="SVGRepo_iconCarrier">
               <path
                 d="M20.71 44.56l-6.52-5.93s-.27-2.95 2.04-3.89c2.63-1.07 5.16.19 5.16.19l3.99 7.68l-4.67 1.95z"
@@ -171,9 +221,55 @@ const Navbar = () => {
         </Link>
       </div>
       <div className="header__right">
-        <img className="avatar" src="https://i.pravatar.cc/80" alt="" />
+        <div className="navbar-search" ref={searchRef}>
+          <input
+            type="text"
+            className="search-input wide"
+            placeholder="Search movies..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => search && setShowDropdown(true)}
+            onKeyDown={handleKeyDown}
+            aria-label="Search movies"
+            autoComplete="off"
+          />
+          <button
+            className="search-btn"
+            onClick={handleSearch}
+            aria-label="Search"
+            type="button"
+          >
+            <svg width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+              <path d="M21.71 20.29l-3.4-3.39A8.94 8.94 0 0019 11a9 9 0 10-9 9 8.94 8.94 0 005.9-1.69l3.39 3.4a1 1 0 001.42-1.42zM11 18a7 7 0 117-7 7 7 0 01-7 7z" />
+            </svg>
+          </button>
+          {showDropdown && results.length > 0 && (
+            <ul className="search-dropdown">
+              {results.map((movie) => (
+                <li key={movie.id}>
+                  <Link
+                    to={`/movies/${movie.id}`}
+                    onClick={() => {
+                      setSearch("");
+                      setShowDropdown(false);
+                    }}
+                  >
+                    {movie.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <Link to="/profile" aria-label="Profile">
+          <img
+            className="avatar"
+            src="https://i.pravatar.cc/80"
+            alt="User avatar"
+          />
+        </Link>
       </div>
-    </div>
+    </nav>
   );
 };
 
